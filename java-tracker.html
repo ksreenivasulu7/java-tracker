@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Tracker — dev.java + Baeldung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151c;
+    --surface:#1b1f29;
+    --surface-alt:#232839;
+    --border:#2c3140;
+    --text:#eae7de;
+    --text-dim:#8890a0;
+    --accent:#e2a64b;
+    --accent-soft:rgba(226,166,75,0.14);
+    --done:#6fae9a;
+    --done-soft:rgba(111,174,154,0.14);
+    --behind:#c96a5a;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#f6f4ee;
+      --surface:#ffffff;
+      --surface-alt:#f0ede4;
+      --border:#ddd7c8;
+      --text:#20232c;
+      --text-dim:#6b6f7d;
+      --accent:#b8791f;
+      --accent-soft:rgba(184,121,31,0.10);
+      --done:#3f8a72;
+      --done-soft:rgba(63,138,114,0.10);
+      --behind:#b1503f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151c; --surface:#1b1f29; --surface-alt:#232839; --border:#2c3140;
+    --text:#eae7de; --text-dim:#8890a0; --accent:#e2a64b; --accent-soft:rgba(226,166,75,0.14);
+    --done:#6fae9a; --done-soft:rgba(111,174,154,0.14); --behind:#c96a5a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{font-family:'Source Serif 4', serif;}
+  a{color:inherit;}
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .rail{
+    width:280px; flex:none;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    padding:28px 22px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{ font-family:'Source Serif 4', serif; font-size:22px; font-weight:600; letter-spacing:0.2px; margin:0 0 2px 0; }
+  .brand-sub{ font-size:11.5px; color:var(--text-dim); margin:0 0 26px 0; line-height:1.5; }
+  .brand-sub a{ color: var(--accent); text-decoration:none; border-bottom:1px solid currentColor;}
+
+  .ring-wrap{
+    display:flex; align-items:center; gap:16px;
+    padding:16px; background:var(--surface-alt);
+    border:1px solid var(--border); border-radius:10px; margin-bottom:22px;
+  }
+  .ring-num{ font-size:26px; font-weight:600; line-height:1; }
+  .ring-label{ font-size:11px; color:var(--text-dim); margin-top:4px; }
+
+  .start-block{ margin-bottom:22px; }
+  .start-block label{ display:block; font-size:11px; color:var(--text-dim); margin-bottom:6px; }
+  .start-block input[type="date"]{
+    width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    font-family:inherit; font-size:12.5px; padding:8px 9px; border-radius:6px;
+  }
+  .pace-note{ font-size:11px; margin-top:8px; line-height:1.5; color:var(--text-dim); }
+  .pace-note.on{ color:var(--done); }
+  .pace-note.behind{ color:var(--behind); }
+
+  .nav-phases{ display:flex; flex-direction:column; gap:3px; margin-bottom:22px; }
+  .nav-phases .grp-label{ font-size:11px; color:var(--text-dim); margin:14px 0 6px 0; }
+  .phase-btn{
+    display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left;
+    background:transparent; border:1px solid transparent; color:var(--text);
+    font-family:inherit; font-size:12.5px; padding:7px 10px; border-radius:7px; cursor:pointer;
+    line-height:1.35;
+  }
+  .phase-btn:hover{ background:var(--surface-alt); }
+  .phase-btn.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .phase-btn .p-count{ font-size:10.5px; color:var(--text-dim); flex:none; margin-left:8px; }
+  .phase-btn.active .p-count{ color:var(--accent); }
+
+  .filter-row{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .chip-btn{
+    background:transparent; border:1px solid var(--border); color:var(--text-dim);
+    font-family:inherit; font-size:11px; padding:6px 9px; border-radius:20px; cursor:pointer;
+  }
+  .chip-btn.active{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+
+  .reset-btn{
+    margin-top:18px; background:transparent; border:1px solid var(--border); color:var(--text-dim);
+    font-family:inherit; font-size:11px; padding:8px 10px; border-radius:7px; cursor:pointer; width:100%;
+  }
+  .reset-btn:hover{ border-color:var(--behind); color:var(--behind); }
+
+  .legend{ margin-top:20px; font-size:10.5px; color:var(--text-dim); line-height:1.9; }
+  .legend .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1; min-width:0; padding:36px 44px 80px 44px; }
+  .main-head{ max-width:760px; margin-bottom:30px; }
+  .main-head h1{ font-size:28px; font-weight:600; margin:0 0 8px 0; }
+  .main-head p{ font-size:13.5px; color:var(--text-dim); line-height:1.65; margin:0; }
+
+  .progressbar{
+    max-width:760px; height:8px; background:var(--surface-alt); border:1px solid var(--border);
+    border-radius:5px; overflow:hidden; margin:20px 0 34px 0;
+  }
+  .progressbar-fill{ height:100%; background:linear-gradient(90deg, var(--accent), var(--done)); width:0%; transition:width .4s ease; }
+
+  .phase-num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%; border:1px solid var(--accent); color:var(--accent);
+    font-size:11px; font-weight:600; flex:none; margin-right:10px;
+  }
+
+  .week-block{ max-width:760px; border:1px solid var(--border); border-radius:10px; margin-bottom:16px; background:var(--surface); overflow:hidden; }
+  .week-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px; cursor:pointer; user-select:none; }
+  .week-head:hover{ background:var(--surface-alt); }
+  .week-head-left{ display:flex; align-items:center; min-width:0; }
+  .week-title{ font-family:'Source Serif 4', serif; font-size:16.5px; font-weight:600; }
+  .week-sub{ font-size:11.5px; color:var(--text-dim); margin-top:2px; margin-left:32px; }
+  .week-right{ display:flex; align-items:center; gap:12px; }
+  .week-progress{ font-size:11.5px; color:var(--text-dim); white-space:nowrap; }
+  .caret{ width:9px; height:9px; border-right:2px solid var(--text-dim); border-bottom:2px solid var(--text-dim); transform:rotate(45deg); transition:transform .2s ease; flex:none; }
+  .week-block.open .caret{ transform:rotate(-135deg); }
+  .week-body{ display:none; border-top:1px solid var(--border); }
+  .week-block.open .week-body{ display:block; }
+
+  .day-row{ display:flex; gap:14px; padding:14px 18px; border-bottom:1px solid var(--border); align-items:flex-start; position:relative; }
+  .day-row:last-child{ border-bottom:none; }
+  .day-row.today{ background:var(--accent-soft); }
+  .day-row.today::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+  .day-row.done{ background:var(--done-soft); }
+
+  .day-check{
+    flex:none; width:19px; height:19px; border:1.5px solid var(--border); border-radius:5px; margin-top:2px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--bg);
+  }
+  .day-check.checked{ background:var(--done); border-color:var(--done); }
+  .day-check.checked::after{ content:""; width:5px; height:9px; border-right:2px solid var(--bg); border-bottom:2px solid var(--bg); transform:rotate(45deg) translate(-1px,-1px); }
+
+  .day-main{ flex:1; min-width:0; }
+  .day-top{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .day-badge{ font-size:11px; color:var(--text-dim); font-weight:500; flex:none; }
+  .day-row.today .day-badge{ color:var(--accent); }
+  .day-title{ font-family:'Source Serif 4', serif; font-size:15px; font-weight:600; line-height:1.4; }
+  .day-row.done .day-title{ color:var(--text-dim); text-decoration:line-through; text-decoration-color:var(--border); }
+
+  .day-type{ display:inline-block; font-size:10px; padding:2px 7px; border-radius:20px; border:1px solid var(--border); color:var(--text-dim); margin-left:2px; vertical-align:middle; }
+  .day-type.lesson{ border-color:var(--accent); color:var(--accent); }
+  .day-type.practice{ border-color:#7a9bd1; color:#7a9bd1; }
+  .day-type.review{ border-color:var(--text-dim); }
+  .day-type.project{ border-color:var(--done); color:var(--done); }
+
+  .day-links{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  .day-links a{
+    font-size:11.5px; text-decoration:none; color:var(--text); background:var(--surface-alt);
+    border:1px solid var(--border); padding:5px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px;
+  }
+  .day-links a:hover{ border-color:var(--accent); color:var(--accent); }
+  .day-links a::after{ content:"↗"; font-size:10px; opacity:0.7; }
+  .day-note{ margin-top:6px; font-size:12px; color:var(--text-dim); line-height:1.5; }
+
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:6px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+
+  @media (max-width: 820px){
+    .app{ flex-direction:column; }
+    .rail{ width:100%; height:auto; position:relative; border-right:none; border-bottom:1px solid var(--border); }
+    .main{ padding:26px 18px 60px 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <p class="brand">Learn Java</p>
+    <p class="brand-sub">Phases 1–8: <a href="https://dev.java/learn/" target="_blank" rel="noopener">dev.java/learn</a> (core language, JDK &amp; concurrency add-ons from <a href="https://www.baeldung.com/" target="_blank" rel="noopener">Baeldung</a>). One straight line from setup to capstone — no JavaFX, no Spring.</p>
+
+    <div class="ring-wrap">
+      <div>
+        <div class="ring-num" id="ringNum">0/80</div>
+        <div class="ring-label">days completed</div>
+      </div>
+    </div>
+
+    <div class="start-block">
+      <label for="startDate">Start date</label>
+      <input type="date" id="startDate">
+      <div class="pace-note" id="paceNote">Set a start date to track your pace.</div>
+    </div>
+
+    <div class="nav-phases">
+      <div class="grp-label">Jump to phase</div>
+      <button class="phase-btn active" data-phase="all">All 80 days <span class="p-count"></span></button>
+      <button class="phase-btn" data-phase="1">1 · Setup <span class="p-count">7</span></button>
+      <button class="phase-btn" data-phase="2">2 · Language fundamentals <span class="p-count">19</span></button>
+      <button class="phase-btn" data-phase="3">3 · Core APIs <span class="p-count">14</span></button>
+      <button class="phase-btn" data-phase="4">4 · Reflection, security & modules <span class="p-count">6</span></button>
+      <button class="phase-btn" data-phase="5">5 · Concurrency <span class="p-count">8</span></button>
+      <button class="phase-btn" data-phase="6">6 · Networking & JDBC <span class="p-count">7</span></button>
+      <button class="phase-btn" data-phase="7">7 · Build tools & testing <span class="p-count">7</span></button>
+      <button class="phase-btn" data-phase="8">8 · JVM internals & tooling <span class="p-count">7</span></button>
+      <button class="phase-btn" data-phase="9">9 · Certification & capstone <span class="p-count">5</span></button>
+    </div>
+
+    <div class="grp-label" style="margin-top:0;">Show</div>
+    <div class="filter-row">
+      <button class="chip-btn active" data-filter="all">All</button>
+      <button class="chip-btn" data-filter="remaining">Remaining</button>
+      <button class="chip-btn" data-filter="done">Done</button>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">Reset all progress</button>
+
+    <div class="legend">
+      <div><span class="dot" style="background:var(--accent)"></span>Lesson</div>
+      <div><span class="dot" style="background:#7a9bd1"></span>Practice</div>
+      <div><span class="dot" style="background:var(--text-dim)"></span>Review</div>
+      <div><span class="dot" style="background:var(--done)"></span>Project</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-head">
+      <h1>80-Day Java Tracker</h1>
+      <p>One structured path, in order: language fundamentals → core APIs → reflection, security & modules → concurrency → networking & JDBC → build tools & testing → JVM internals → certification & capstone. Each phase builds on the one before it. Every lesson links to its source; progress and pace are saved in this browser only.</p>
+    </div>
+
+    <div class="progressbar"><div class="progressbar-fill" id="progressFill"></div></div>
+
+    <div id="weeksContainer"></div>
+  </main>
+
+</div>
+
+<script>
+const u = (path) => "https://dev.java" + path;
+const b = (path) => "https://www.baeldung.com" + path;
+
+const L = {
+  gettingStarted: u("/learn/getting-started/"),
+  launch: u("/learn/launch-simple-source-code-programs/"),
+  jshell: u("/learn/jshell-tool/"),
+  vscode: u("/learn/vscode-java/"),
+  intellij: u("/learn/intellij-idea/"),
+  eclipse: u("/learn/eclipse/"),
+  evolution: "https://dev.java/evolution/",
+  preview: u("/learn/new-features/using-preview/"),
+  oop: u("/learn/oop/"),
+  basics: u("/learn/language-basics/"),
+  classesObjects: u("/learn/classes-objects/"),
+  records: u("/learn/records/"),
+  numbersStrings: u("/learn/numbers-strings/"),
+  inheritance: u("/learn/inheritance/"),
+  interfaces: u("/learn/interfaces/"),
+  generics: u("/learn/generics/"),
+  lambdas: u("/learn/lambdas/"),
+  annotations: u("/learn/annotations/"),
+  packages: u("/learn/packages/"),
+  patternMatching: u("/learn/pattern-matching/"),
+  exceptions: u("/learn/exceptions/"),
+  refactor: u("/learn/refactoring-to-functional-style/"),
+  collections: u("/learn/api/collections-framework/"),
+  streams: u("/learn/api/streams/"),
+  io: u("/learn/java-io/"),
+  modernio: u("/learn/modernio/"),
+  datetime: u("/learn/date-time/"),
+  regex: u("/learn/regex/"),
+  reflectionIntro: u("/learn/introduction_to_java_reflection/"),
+  reflection: u("/learn/reflection/"),
+  methodHandles: u("/learn/introduction_to_method_handles/"),
+  security: u("/learn/security/"),
+  ffm: u("/learn/ffm/"),
+  modules: u("/learn/modules/"),
+  jlink: u("/learn/jlink/"),
+  jvmCore: u("/learn/jvm/tools/core/"),
+  jvmMonitoring: u("/learn/jvm/tools/monitoring/"),
+  jpackage: u("/learn/jvm/tool/jpackage/"),
+  jvmSecurity: u("/learn/jvm/tool/security/"),
+  jvmTrouble: u("/learn/jvm/tool/troubleshooting/"),
+  gc: u("/learn/jvm/tool/garbage-collection/"),
+  cds: u("/learn/jvm/cds-appcds/"),
+  jfr: u("/learn/jvm/jfr/"),
+  jwebserver: u("/learn/jvm/tool/jwebserver/"),
+  jvmComplementary: u("/learn/jvm/complementary/"),
+  cert: u("/learn/java-cert-overview/"),
+  debugging: u("/learn/debugging/"),
+};
+
+const B = {
+  startThread: b("/java-start-thread"),
+  threadLifecycle: b("/java-thread-lifecycle"),
+  virtualThreadsHub: u("/learn/new-features/virtual-threads/"), // still dev.java's own page
+  concurrencyHub: b("/category/java-concurrency"),
+  executorTag: b("/tag/executorservice"),
+  completableFutureTag: b("/tag/java-completablefuture"),
+  networkingHub: b("/category/networking"),
+  jdbcBasics: b("/tag/jdbc-basics"),
+  jdbcTag: b("/tag/jdbc"),
+  mavenHub: b("/category/maven"),
+  gradleHub: b("/category/gradle"),
+  testingHub: b("/category/testing"),
+};
+
+// type: lesson | practice | review | project. phase: 1-9, matches the sidebar buttons.
+const DAYS = [
+// PHASE 1 — Setup (1-7)
+{d:1, phase:1, title:"Getting started with the JDK", type:"lesson", links:[{label:"Getting Started with Java", url:L.gettingStarted}]},
+{d:2, phase:1, title:"Launching source-code programs & JShell", type:"lesson", links:[{label:"Launching Simple Source-Code Programs", url:L.launch},{label:"JShell - The Java Shell Tool", url:L.jshell}]},
+{d:3, phase:1, title:"Pick and set up your IDE", type:"lesson", note:"Choose one — a real install/config day, not just reading.", links:[{label:"VS Code", url:L.vscode},{label:"IntelliJ IDEA", url:L.intellij},{label:"Eclipse", url:L.eclipse}]},
+{d:4, phase:1, title:"Practice: write & run 3 small programs in your IDE", type:"practice", links:[]},
+{d:5, phase:1, title:"How Java has evolved since Java 8", type:"lesson", links:[{label:"Java Platform Evolution", url:L.evolution}]},
+{d:6, phase:1, title:"OOP: the big picture", type:"lesson", links:[{label:"Objects, Classes, Interfaces, Packages, and Inheritance", url:L.oop}]},
+{d:7, phase:1, title:"Phase 1 review — redo Day 1–2 from memory", type:"review", links:[]},
+
+// PHASE 2 — Language Fundamentals (8-26)
+{d:8, phase:2, title:"Java language basics, part 1 — variables & primitive types", type:"lesson", note:"One of the longest pages on the site — split across 2 days.", links:[{label:"Java Language Basics", url:L.basics}]},
+{d:9, phase:2, title:"Java language basics, part 2 — control flow, arrays & operators", type:"lesson", links:[{label:"Java Language Basics", url:L.basics}]},
+{d:10, phase:2, title:"Classes and objects, part 1 — declaring classes & constructors", type:"lesson", links:[{label:"Classes and Objects", url:L.classesObjects}]},
+{d:11, phase:2, title:"Classes and objects, part 2 — access control & returning values", type:"lesson", links:[{label:"Classes and Objects", url:L.classesObjects}]},
+{d:12, phase:2, title:"Practice: model 3–4 classes with constructors & access control", type:"practice", links:[]},
+{d:13, phase:2, title:"Modelling immutable data with records", type:"lesson", links:[{label:"Using Records to Model Immutable Data", url:L.records}]},
+{d:14, phase:2, title:"Numbers and strings, part 1 — numeric types & wrapper classes", type:"lesson", links:[{label:"Numbers and Strings", url:L.numbersStrings}]},
+{d:15, phase:2, title:"Numbers and strings, part 2 — String & StringBuilder", type:"lesson", links:[{label:"Numbers and Strings", url:L.numbersStrings}]},
+{d:16, phase:2, title:"Inheritance", type:"lesson", links:[{label:"Inheritance", url:L.inheritance}]},
+{d:17, phase:2, title:"Interfaces", type:"lesson", links:[{label:"Interfaces", url:L.interfaces}]},
+{d:18, phase:2, title:"Practice: class hierarchy + interfaces exercise", type:"practice", links:[]},
+{d:19, phase:2, title:"Generics, part 1 — parameterized types", type:"lesson", links:[{label:"Generics", url:L.generics}]},
+{d:20, phase:2, title:"Generics, part 2 — bounded types & wildcards", type:"lesson", links:[{label:"Generics", url:L.generics}]},
+{d:21, phase:2, title:"Lambda expressions", type:"lesson", links:[{label:"Lambda Expressions", url:L.lambdas}]},
+{d:22, phase:2, title:"Annotations & packages", type:"lesson", links:[{label:"Annotations", url:L.annotations},{label:"Packages", url:L.packages}]},
+{d:23, phase:2, title:"Pattern matching", type:"lesson", links:[{label:"Using Pattern Matching", url:L.patternMatching}]},
+{d:24, phase:2, title:"Exceptions", type:"lesson", links:[{label:"Exceptions", url:L.exceptions}]},
+{d:25, phase:2, title:"From imperative to functional style", type:"lesson", links:[{label:"Refactoring from the Imperative to the Functional Style", url:L.refactor}]},
+{d:26, phase:2, title:"Practice: mini CLI app using lambdas + generics + exceptions", type:"practice", links:[]},
+
+// PHASE 3 — Core APIs (27-40)
+{d:27, phase:3, title:"The Collections Framework, part 1 — List & Set", type:"lesson", note:"One of the biggest pages here — 2 days.", links:[{label:"The Collections Framework", url:L.collections}]},
+{d:28, phase:3, title:"The Collections Framework, part 2 — Map, Deque, sorting & algorithms", type:"lesson", links:[{label:"The Collections Framework", url:L.collections}]},
+{d:29, phase:3, title:"Practice: collections exercises", type:"practice", links:[]},
+{d:30, phase:3, title:"The Stream API, part 1 — creating & intermediate operations", type:"lesson", note:"Just as dense as Collections — 2 days.", links:[{label:"The Stream API", url:L.streams}]},
+{d:31, phase:3, title:"The Stream API, part 2 — collectors, terminal ops & parallel streams", type:"lesson", links:[{label:"The Stream API", url:L.streams}]},
+{d:32, phase:3, title:"Practice: rewrite loops as streams", type:"practice", links:[]},
+{d:33, phase:3, title:"Phase review — checkpoint", type:"review", links:[]},
+{d:34, phase:3, title:"Project: small console app (e.g. a contact book)", type:"project", links:[]},
+{d:35, phase:3, title:"The Java I/O API", type:"lesson", links:[{label:"The Java I/O API", url:L.io}]},
+{d:36, phase:3, title:"Common I/O tasks in modern Java", type:"lesson", note:"Dense — lots of small concrete tasks. Skim once, keep as reference.", links:[{label:"Common I/O Tasks in Modern Java", url:L.modernio}]},
+{d:37, phase:3, title:"Practice: file read/write mini project", type:"practice", links:[]},
+{d:38, phase:3, title:"The Date Time API", type:"lesson", links:[{label:"The Date Time API", url:L.datetime}]},
+{d:39, phase:3, title:"Regular expressions", type:"lesson", links:[{label:"Regular Expressions", url:L.regex}]},
+{d:40, phase:3, title:"Phase review", type:"review", links:[]},
+
+// PHASE 4 — Reflection, Security & Modules (41-46)
+{d:41, phase:4, title:"Introduction to reflection & method handles", type:"lesson", links:[{label:"Introduction to Java Reflection", url:L.reflectionIntro},{label:"Introduction to Method Handles", url:L.methodHandles}]},
+{d:42, phase:4, title:"The Reflection API, in depth", type:"lesson", note:"Dense — take your time, it builds directly on yesterday's intro.", links:[{label:"The Reflection API", url:L.reflection}]},
+{d:43, phase:4, title:"Fundamentals of security using JDK libraries", type:"lesson", links:[{label:"Fundamentals of Security using JDK Libraries", url:L.security}]},
+{d:44, phase:4, title:"Modules", type:"lesson", links:[{label:"Modules", url:L.modules}]},
+{d:45, phase:4, title:"Custom runtimes with JLink", type:"lesson", links:[{label:"Creating Runtime and Application Images with JLink", url:L.jlink}]},
+{d:46, phase:4, title:"Phase review", type:"review", links:[]},
+
+// PHASE 5 — Concurrency (47-54)
+{d:47, phase:5, title:"Threads & the thread lifecycle", type:"lesson", note:"Starts the concurrency block — links from here move to Baeldung, since dev.java doesn't cover threading fundamentals.", links:[{label:"How to Start a Thread in Java", url:B.startThread},{label:"Life Cycle of a Thread in Java", url:B.threadLifecycle}]},
+{d:48, phase:5, title:"Virtual threads — what, why, how", type:"lesson", links:[{label:"Virtual Threads", url:B.virtualThreadsHub}]},
+{d:49, phase:5, title:"Thread coordination — synchronized, wait/notify", type:"lesson", links:[{label:"Java Concurrency guides", url:B.concurrencyHub}]},
+{d:50, phase:5, title:"The ExecutorService & thread pools", type:"lesson", links:[{label:"ExecutorService guides", url:B.executorTag}]},
+{d:51, phase:5, title:"Future & CompletableFuture", type:"lesson", links:[{label:"CompletableFuture guides", url:B.completableFutureTag}]},
+{d:52, phase:5, title:"The java.util.concurrent collections", type:"lesson", links:[{label:"Java Concurrency guides", url:B.concurrencyHub}]},
+{d:53, phase:5, title:"Practice: build a small multi-threaded task runner", type:"practice", links:[]},
+{d:54, phase:5, title:"Phase review", type:"review", links:[]},
+
+// PHASE 6 — Networking & JDBC (55-61)
+{d:55, phase:6, title:"Java networking basics — sockets & URLConnection", type:"lesson", links:[{label:"Networking guides", url:B.networkingHub}]},
+{d:56, phase:6, title:"The Java HttpClient", type:"lesson", links:[{label:"Networking guides", url:B.networkingHub}]},
+{d:57, phase:6, title:"Introduction to JDBC", type:"lesson", links:[{label:"Introduction to JDBC", url:B.jdbcBasics}]},
+{d:58, phase:6, title:"Working with JDBC — connections, statements, result sets", type:"lesson", links:[{label:"JDBC guides", url:B.jdbcTag}]},
+{d:59, phase:6, title:"Connection pooling & JDBC best practices", type:"lesson", links:[{label:"JDBC guides", url:B.jdbcTag}]},
+{d:60, phase:6, title:"Practice: build a small JDBC CRUD app against a local database", type:"practice", links:[]},
+{d:61, phase:6, title:"Phase review", type:"review", links:[]},
+
+// PHASE 7 — Build Tools & Testing (62-68)
+{d:62, phase:7, title:"Maven fundamentals", type:"lesson", links:[{label:"Maven guides", url:B.mavenHub}]},
+{d:63, phase:7, title:"Gradle fundamentals", type:"lesson", links:[{label:"Gradle guides", url:B.gradleHub}]},
+{d:64, phase:7, title:"JUnit 5, part 1 — writing your first tests", type:"lesson", links:[{label:"Testing guides", url:B.testingHub}]},
+{d:65, phase:7, title:"JUnit 5, part 2 — assertions, parameterized tests, lifecycle", type:"lesson", links:[{label:"Testing guides", url:B.testingHub}]},
+{d:66, phase:7, title:"Mockito — mocking dependencies in tests", type:"lesson", links:[{label:"Testing guides", url:B.testingHub}]},
+{d:67, phase:7, title:"Practice: add a Maven/Gradle build and JUnit tests to an earlier project", type:"practice", links:[]},
+{d:68, phase:7, title:"Phase review", type:"review", links:[]},
+
+// PHASE 8 — JVM Internals & Tooling (69-75)
+{d:69, phase:8, title:"Core JDK tools & monitoring tools", type:"lesson", links:[{label:"The Core JDK Tools", url:L.jvmCore},{label:"The Monitoring Tools", url:L.jvmMonitoring}]},
+{d:70, phase:8, title:"JPackage & the security tools", type:"lesson", links:[{label:"JPackage", url:L.jpackage},{label:"The Security Tools", url:L.jvmSecurity}]},
+{d:71, phase:8, title:"Troubleshooting tools & garbage collection", type:"lesson", links:[{label:"The Troubleshooting Tools", url:L.jvmTrouble},{label:"Garbage Collection in Java Overview", url:L.gc}]},
+{d:72, phase:8, title:"CDS, Flight Recorder, JWebServer & complementary tools", type:"lesson", note:"Four short reference pages — skim for what each tool is for.", links:[{label:"CDS and AppCDS in Hotspot", url:L.cds},{label:"JDK Flight Recorder", url:L.jfr},{label:"JWebserver", url:L.jwebserver},{label:"Complementary JDK Tools", url:L.jvmComplementary}]},
+{d:73, phase:8, title:"The Foreign Function & Memory API", type:"lesson", note:"The newest, most involved API on this list — go slow.", links:[{label:"The Foreign Function and Memory API", url:L.ffm}]},
+{d:74, phase:8, title:"Debugging in Java", type:"lesson", links:[{label:"Debugging in Java", url:L.debugging}]},
+{d:75, phase:8, title:"Practice: debug & profile your project", type:"practice", links:[]},
+
+// PHASE 9 — Certification & Capstone (76-80)
+{d:76, phase:9, title:"Preview features & the Java certification path", type:"lesson", links:[{label:"Using the Preview Features Available in the JDK", url:L.preview},{label:"Getting Started with Java Certification", url:L.cert}]},
+{d:77, phase:9, title:"Final review — revisit any weak topics before the capstone", type:"review", links:[]},
+{d:78, phase:9, title:"Capstone, part 1 — design & build core features (concurrency + JDBC)", type:"project", links:[]},
+{d:79, phase:9, title:"Capstone, part 2 — add JUnit tests and a proper Maven/Gradle build", type:"project", links:[]},
+{d:80, phase:9, title:"Capstone, part 3 — polish, debug & wrap up; plan your next steps", type:"project", links:[]},
+];
+
+const PHASES = [
+  {p:1, title:"Phase 1", sub:"Setup & your first Java application", days:[1,7]},
+  {p:2, title:"Phase 2", sub:"Language fundamentals — syntax, OOP, generics, lambdas", days:[8,26]},
+  {p:3, title:"Phase 3", sub:"Core APIs — Collections, Streams, I/O, dates, regex", days:[27,40]},
+  {p:4, title:"Phase 4", sub:"Reflection, security & modules", days:[41,46]},
+  {p:5, title:"Phase 5", sub:"Concurrency — threads, executors, futures", days:[47,54]},
+  {p:6, title:"Phase 6", sub:"Networking & JDBC", days:[55,61]},
+  {p:7, title:"Phase 7", sub:"Build tools & testing — Maven, Gradle, JUnit, Mockito", days:[62,68]},
+  {p:8, title:"Phase 8", sub:"JVM internals & tooling", days:[69,75]},
+  {p:9, title:"Phase 9", sub:"Certification, review & capstone", days:[76,80]},
+];
+
+let completed = {};
+let startDate = null;
+let activePhase = "all";
+let activeFilter = "all";
+let weekOpenState = {};
+
+function loadState(){
+  try{ const raw = localStorage.getItem("javaTracker80.completed"); completed = raw ? JSON.parse(raw) : {}; }
+  catch(e){ completed = {}; }
+  try{ startDate = localStorage.getItem("javaTracker80.startDate") || null; }
+  catch(e){ startDate = null; }
+}
+function saveCompleted(){ try{ localStorage.setItem("javaTracker80.completed", JSON.stringify(completed)); }catch(e){} }
+function saveStartDate(){ try{ localStorage.setItem("javaTracker80.startDate", startDate || ""); }catch(e){} }
+
+function todaysExpectedDay(){
+  if(!startDate) return null;
+  const start = new Date(startDate + "T00:00:00");
+  const now = new Date();
+  const nowMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startMid = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const diffDays = Math.floor((nowMid - startMid) / 86400000);
+  const dayNum = diffDays + 1;
+  if(dayNum < 1) return 0;
+  if(dayNum > 80) return 81;
+  return dayNum;
+}
+
+function render(){
+  const container = document.getElementById("weeksContainer");
+  container.innerHTML = "";
+  const expected = todaysExpectedDay();
+
+  PHASES.forEach(phase=>{
+    if(activePhase !== "all" && phase.p !== Number(activePhase)) return;
+
+    const [from,to] = phase.days;
+    const daysInPhase = DAYS.filter(d=>d.d>=from && d.d<=to);
+    const visibleDays = daysInPhase.filter(d=>{
+      if(activeFilter === "done") return !!completed[d.d];
+      if(activeFilter === "remaining") return !completed[d.d];
+      return true;
+    });
+    if(visibleDays.length === 0) return;
+
+    const doneCount = daysInPhase.filter(d=>completed[d.d]).length;
+    const isCurrentPhase = expected && expected>=from && expected<=to;
+
+    const block = document.createElement("div");
+    block.className = "week-block" + (isCurrentPhase ? " open" : (weekOpenState[phase.p] ? " open" : ""));
+    block.dataset.phase = phase.p;
+
+    block.innerHTML = `
+      <div class="week-head">
+        <div class="week-head-left">
+          <span class="phase-num">${phase.p}</span>
+          <div>
+            <div class="week-title">${phase.title} <span style="color:var(--text-dim); font-weight:400; font-size:13px;">· Days ${from}–${to}</span></div>
+          </div>
+        </div>
+        <div class="week-right">
+          <div class="week-progress">${doneCount}/${daysInPhase.length}</div>
+          <div class="caret"></div>
+        </div>
+      </div>
+      <div class="week-sub">${phase.sub}</div>
+      <div class="week-body"></div>
+    `;
+    block.querySelector(".week-head").addEventListener("click", ()=>{
+      block.classList.toggle("open");
+      weekOpenState[phase.p] = block.classList.contains("open");
+    });
+
+    const body = block.querySelector(".week-body");
+    visibleDays.forEach(day=>{
+      const isDone = !!completed[day.d];
+      const isToday = expected === day.d;
+      const row = document.createElement("div");
+      row.className = "day-row" + (isDone ? " done" : "") + (isToday ? " today" : "");
+
+      const linksHtml = (day.links && day.links.length)
+        ? `<div class="day-links">${day.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener">${l.label}</a>`).join("")}</div>`
+        : "";
+      const noteHtml = day.note ? `<div class="day-note">${day.note}</div>` : "";
+
+      row.innerHTML = `
+        <div class="day-check ${isDone ? "checked" : ""}" data-day="${day.d}"></div>
+        <div class="day-main">
+          <div class="day-top">
+            <span class="day-badge">DAY ${String(day.d).padStart(2,"0")}</span>
+            <span class="day-title">${day.title}</span>
+            <span class="day-type ${day.type}">${day.type}</span>
+          </div>
+          ${linksHtml}
+          ${noteHtml}
+        </div>
+      `;
+      row.querySelector(".day-check").addEventListener("click", ()=>{ toggleDay(day.d); });
+      body.appendChild(row);
+    });
+
+    container.appendChild(block);
+  });
+
+  updateStats();
+}
+
+function toggleDay(dayNum){
+  if(completed[dayNum]) delete completed[dayNum];
+  else completed[dayNum] = true;
+  saveCompleted();
+  render();
+}
+
+function updateStats(){
+  const total = 80;
+  const done = Object.keys(completed).filter(k=>completed[k]).length;
+  document.getElementById("ringNum").textContent = done + "/" + total;
+  document.getElementById("progressFill").style.width = Math.round((done/total)*100) + "%";
+
+  const paceNote = document.getElementById("paceNote");
+  if(!startDate){
+    paceNote.textContent = "Set a start date to track your pace.";
+    paceNote.className = "pace-note";
+    return;
+  }
+  const expected = todaysExpectedDay();
+  if(expected === 0){
+    paceNote.textContent = "Your plan starts soon.";
+    paceNote.className = "pace-note";
+  } else if(expected === 81){
+    paceNote.textContent = "Plan finished — nice work!";
+    paceNote.className = "pace-note on";
+  } else {
+    const diff = done - (expected - 1);
+    if(diff >= 0){
+      paceNote.textContent = `Day ${expected} of 80 — on pace (${done} done).`;
+      paceNote.className = "pace-note on";
+    } else {
+      paceNote.textContent = `Day ${expected} of 80 — ${Math.abs(diff)} day(s) behind pace.`;
+      paceNote.className = "pace-note behind";
+    }
+  }
+}
+
+document.querySelectorAll(".phase-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".phase-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    activePhase = btn.dataset.phase;
+    render();
+  });
+});
+document.querySelectorAll(".chip-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".chip-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilter = btn.dataset.filter;
+    render();
+  });
+});
+document.getElementById("startDate").addEventListener("change", (e)=>{
+  startDate = e.target.value || null;
+  saveStartDate();
+  render();
+});
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Reset all checked days? This can't be undone.")){
+    completed = {};
+    saveCompleted();
+    render();
+  }
+});
+
+loadState();
+if(startDate){ document.getElementById("startDate").value = startDate; }
+render();
+</script>
+</body>
+</html>
